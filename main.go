@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
@@ -10,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -194,11 +194,18 @@ func validateImageType(filename string) bool {
 }
 
 func downloadImage(url string) ([]byte, error) {
+	// 发出http get请求
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to download image: %w", err)
 	}
 	defer resp.Body.Close()
 
-	return bufio.NewReader(resp.Body).ReadBytes('\n')
+	// 将响应主体读取到字节切片中
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	return data, nil
 }
