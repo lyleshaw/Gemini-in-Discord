@@ -87,16 +87,18 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	log.Printf("Message from %s: %s\n", m.Author.Username, m.Content)
+
 	if len(m.Attachments) > 0 {
 		// Validate the image type
 		if !validateImageType(m.Attachments[0].Filename) {
-			s.ChannelMessageSend(m.ChannelID, "Invalid image type. Please upload a jpeg image.")
+			s.ChannelMessageSendReply(m.ChannelID, "Invalid image type. Please upload an image.", m.Reference())
 			return
 		}
 
 		imgData, err := downloadImage(m.Attachments[0].URL)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "An error occurred processing the image.")
+			s.ChannelMessageSendReply(m.ChannelID, "An error occurred processing the image.", m.Reference())
 			return
 		}
 
@@ -129,9 +131,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				break
 			}
 			if err != nil {
+				log.Printf("error: %s", err.Error())
 				log.Fatal(err)
 			}
-			log.Printf("completion: %+v", resp.Candidates[0])
+			log.Printf("resp: %+v", resp.Candidates[0])
+			log.Printf("completion: %+v", resp.Candidates[0].Content.Parts[0].(genai.Text))
 			completion += string(resp.Candidates[0].Content.Parts[0].(genai.Text))
 			s.ChannelMessageEdit(m.ChannelID, message.ID, completion)
 		}
@@ -164,9 +168,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				break
 			}
 			if err != nil {
+				log.Printf("error: %s", err.Error())
 				log.Fatal(err)
 			}
-			log.Printf("completion: %+v", resp.Candidates[0])
+			log.Printf("resp: %+v", resp.Candidates[0])
+			log.Printf("completion: %+v", resp.Candidates[0].Content.Parts[0].(genai.Text))
 			completion += string(resp.Candidates[0].Content.Parts[0].(genai.Text))
 			s.ChannelMessageEdit(m.ChannelID, message.ID, completion)
 		}
