@@ -158,6 +158,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		if cs == nil {
 			cs = model.StartChat()
+			if cs == nil {
+				s.ChannelMessageEdit(m.ChannelID, message.ID, "An error occurred. Please try again.")
+			}
 		}
 
 		iter := cs.SendMessageStream(ctx, genai.Text(m.Content))
