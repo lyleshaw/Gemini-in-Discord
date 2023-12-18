@@ -79,7 +79,7 @@ func main() {
 	_ = dg.Close()
 }
 
-var cs *genai.ChatSession
+var GeminiChat = map[string]*genai.ChatSession{}
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
@@ -156,11 +156,17 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		// For text-only input, use the gemini-pro model
 		model := client.GenerativeModel("gemini-pro")
 
-		if cs == nil {
-			cs = model.StartChat()
+		var cs *genai.ChatSession
+		if cs, ok := GeminiChat[m.ChannelID]; ok {
 			if cs == nil {
-				s.ChannelMessageEdit(m.ChannelID, message.ID, "An error occurred. Please try again.")
+				cs = model.StartChat()
+				GeminiChat[m.ChannelID] = cs
+			} else {
+				cs = GeminiChat[m.ChannelID]
 			}
+		} else {
+			cs = model.StartChat()
+			GeminiChat[m.ChannelID] = cs
 		}
 
 		iter := cs.SendMessageStream(ctx, genai.Text(m.Content))
